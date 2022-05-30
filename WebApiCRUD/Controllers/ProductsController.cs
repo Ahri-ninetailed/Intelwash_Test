@@ -49,7 +49,7 @@ namespace WebApiCRUD.Controllers
         {
             if (id != product.Id)
             {
-                return BadRequest();
+                throw new Exception("Id не совпадают. Нельзя изменить Id продукта.");
             }
 
             _context.Entry(product).State = EntityState.Modified;
@@ -62,7 +62,7 @@ namespace WebApiCRUD.Controllers
             {
                 if (!ProductExists(id))
                 {
-                    return NotFound();
+                    throw new Exception("Не найдено продукта с таким Id");
                 }
                 else
                 {
@@ -70,7 +70,7 @@ namespace WebApiCRUD.Controllers
                 }
             }
 
-            return NoContent();
+            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
         // POST: api/Products
