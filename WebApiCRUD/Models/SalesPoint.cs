@@ -12,6 +12,7 @@ namespace WebApiCRUD.Models
         public List<ProvidedProduct> ProvidedProducts { get; set; }
         public class ProvidedProduct
         {
+            [Key]
             public int ProductId { get; set; }
             public int ProductQuantity { get; set; }
         }
