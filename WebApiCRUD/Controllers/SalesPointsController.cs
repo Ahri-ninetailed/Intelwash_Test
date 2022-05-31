@@ -92,13 +92,24 @@ namespace WebApiCRUD.Controllers
             var salesPoint = await _context.SalesPoints.FindAsync(id);
             if (salesPoint == null)
             {
-                return NotFound();
+                NoSalesPointFoundException();
             }
+
+            //подгрузим коллекцию имеющихся продуктов в точке
+            _context.Entry(salesPoint).Collection(sp => sp.ProvidedProducts).Load();
+            //при удалении точки, будем удалять все имеющиеся продукты
+            foreach (var providedProductInSalesPoint in salesPoint.ProvidedProducts)
+                _context.ProvidedProducts.Remove(providedProductInSalesPoint);
 
             _context.SalesPoints.Remove(salesPoint);
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        //метод выбрасывают ошибку
+        private static void NoSalesPointFoundException()
+        {
+            throw new Exception("Не найдено торговой точки с таким Id");
         }
 
         private bool SalesPointExists(int id)
