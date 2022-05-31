@@ -111,6 +111,37 @@ namespace WebApiCRUD.Controllers
             return CreatedAtAction("GetSalesPoint", new { id = salesPoint.Id }, salesPoint);
         }
 
+        
+
+        // POST: /api/SalesPoints/ProvidedProductInSalesPoint/{salesPointId}
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("ProvidedProductInSalesPoint/{salesPointId}")]
+        public async Task<ActionResult<SalesPoint>> PostProvidedProductInSalesPoint(int salesPointId ,ProvidedProduct providedProduct)
+        {
+            //получим объект торговой точки, в которую будем добавлять имеющийся товар
+            var salesPoint = _context.SalesPoints.FirstOrDefault(sp => sp.Id == salesPointId);
+            if (salesPoint is null)
+                NoSalesPointFoundException();
+
+            //подрузим имеющиеся товары
+            _context.Entry(salesPoint).Collection(sp => sp.ProvidedProducts).Load();
+
+            //пользователь не может добавить товар, который уже есть в точке
+            CheckProductExistInSalesPoint(salesPoint, providedProduct.ProductId);
+
+            //метод проверяет наличие товара в таблице товаров
+            CheckProductInProductsTable(providedProduct);
+
+            //метод проверяет, есть ли такое Id имеющегося товара, в других торговых точках, если есть, то вылетит ошибка
+            CheckProvidedProductInOtherSalesPoint(salesPointId, providedProduct.Id, "Нельзя добавить имеющийся товар с таким же Id, как в другой точке");
+
+            salesPoint.ProvidedProducts.Add(providedProduct);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetSalesPoint", new { id = salesPoint.Id }, salesPoint);
+        }
+
+        
+
         // DELETE: api/SalesPoints/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSalesPoint(int id)
