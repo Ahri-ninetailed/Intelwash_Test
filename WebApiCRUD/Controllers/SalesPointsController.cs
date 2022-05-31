@@ -25,7 +25,8 @@ namespace WebApiCRUD.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SalesPoint>>> GetSalesPoints()
         {
-            return await _context.SalesPoints.ToListAsync();
+
+            return await _context.SalesPoints.Include(sp => sp.ProvidedProducts).ToListAsync();
         }
 
         // GET: api/SalesPoints/5
