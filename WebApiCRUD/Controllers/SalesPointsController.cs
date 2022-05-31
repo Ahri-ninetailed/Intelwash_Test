@@ -92,6 +92,19 @@ namespace WebApiCRUD.Controllers
         [HttpPost]
         public async Task<ActionResult<SalesPoint>> PostSalesPoint(SalesPoint salesPoint)
         {
+            //получим лист, который содержит все Id добавляемых продуктов
+            var salesPointProductsIdList = (from providedProduct in salesPoint.ProvidedProducts
+                                             select providedProduct.ProductId).ToList();
+            //если лист содержит дубликаты, то такую торговую нельзя добавлять
+            if (salesPointProductsIdList.Count != salesPointProductsIdList.Distinct().Count())
+                throw new Exception("Точка содержит повторяющиеся Id продуктов");
+
+            foreach (var providedProduct in salesPoint.ProvidedProducts)
+            {
+                //проверим, существуют ли продукты, которые мы хотим добавить
+                CheckProductInProductsTable(providedProduct);
+            }
+
             _context.SalesPoints.Add(salesPoint);
             await _context.SaveChangesAsync();
 
