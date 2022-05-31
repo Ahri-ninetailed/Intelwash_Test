@@ -37,8 +37,10 @@ namespace WebApiCRUD.Controllers
 
             if (salesPoint == null)
             {
-                return NotFound();
+                NoSalesPointFoundException();
             }
+
+            _context.Entry(salesPoint).Collection(sp => sp.ProvidedProducts).Load();
 
             return salesPoint;
         }
