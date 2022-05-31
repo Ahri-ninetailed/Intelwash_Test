@@ -108,10 +108,33 @@ namespace WebApiCRUD.Controllers
 
             return NoContent();
         }
-        //метод выбрасывают ошибку
+
+        //метод проверяет, есть ли продукт с таким Id в конкретной торговой точке и если есть выкидывает ошибку
+        private static void CheckProductExistInSalesPoint(SalesPoint salesPoint, int providedProductProductId)
+        {
+            if (salesPoint.ProvidedProducts.Any(pp => pp.ProductId == providedProductProductId))
+                throw new Exception("Продукт с таким Id уже есть");
+        }
+
+        //метод проверяет есть ли имеющийся товар с таким Id в других торговых точках
+        private void CheckProvidedProductInOtherSalesPoint(int salesPointId, int providedProductId, string errorMsg)
+        {
+            
+            if (_context.SalesPoints.Where(sp => sp.Id != salesPointId).Any(sp => sp.ProvidedProducts.Any(pp => pp.Id == providedProductId)))
+                throw new Exception(errorMsg);
+        }
+
+        //метод выбрасывает ошибку, которая сообщает, что торговой точки не существует
         private static void NoSalesPointFoundException()
         {
             throw new Exception("Не найдено торговой точки с таким Id");
+        }
+
+        //метод проверяет наличие товара в таблице товаров
+        private void CheckProductInProductsTable(ProvidedProduct providedProduct)
+        {
+            if (!_context.Products.Any(p => p.Id == providedProduct.ProductId))
+                throw new Exception($"Не найдено продукта с Id={providedProduct.ProductId}");
         }
 
         private bool SalesPointExists(int id)
