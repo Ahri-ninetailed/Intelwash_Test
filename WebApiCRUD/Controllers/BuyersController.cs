@@ -79,9 +79,19 @@ namespace WebApiCRUD.Controllers
         [HttpPost]
         public async Task<ActionResult<Buyer>> PostBuyer(Buyer buyer)
         {
-            _context.Buyers.Add(buyer);
-            await _context.SaveChangesAsync();
+            //если лист идентификаторов продаж не пуст, проверим, существуют ли такие акты продаж, если нет, то сообщим об этом
+            if (buyer.SalesIds is not null)
+            {
+                foreach (var SaleId in buyer.SalesIds)
+                {
+                    if (!_context.Sales.Any(s => s.Id == SaleId.SaleId))
+                        throw new Exception("Нет акта продажи с таким Id");
+                }
+            }
 
+            _context.Buyers.Add(buyer);
+            
+            await _context.SaveChangesAsync();
             return CreatedAtAction("GetBuyer", new { id = buyer.Id }, buyer);
         }
 
