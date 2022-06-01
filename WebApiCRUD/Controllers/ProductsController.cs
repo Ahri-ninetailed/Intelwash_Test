@@ -52,6 +52,10 @@ namespace WebApiCRUD.Controllers
                 throw new Exception("Id не совпадают. Нельзя изменить Id продукта.");
             }
 
+            //если изменяется не только цена, но и имя, проверим имя на уникальность
+            if (_context.Products.Where(p => p.Id == id).Any(p => p.Name != product.Name))
+                CheckForUniqueName(product);
+
             _context.Entry(product).State = EntityState.Modified;
 
             try
@@ -78,6 +82,10 @@ namespace WebApiCRUD.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
+            //так как использую базу данных в памяти, сделаю проверку на уникальность имени добавляемого продукта
+            //в реальных условиях мог бы использовать ограничение столбца unique
+            CheckForUniqueName(product);
+
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -100,6 +108,12 @@ namespace WebApiCRUD.Controllers
             return NoContent();
         }
 
+        //метод проверяет имя продутка на уникальность в бд
+        private void CheckForUniqueName(Product product)
+        {
+            if (_context.Products.Any(p => p.Name == product.Name))
+                throw new Exception("Имя товара с таким именем уже есть");
+        }
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
