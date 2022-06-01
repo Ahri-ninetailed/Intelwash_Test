@@ -73,16 +73,6 @@ namespace WebApiCRUD.Controllers
             return NoContent();
         }
 
-        // POST: api/ProvidedProducts
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<ProvidedProduct>> PostProvidedProduct(ProvidedProduct providedProduct)
-        {
-            _context.ProvidedProducts.Add(providedProduct);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProvidedProduct", new { id = providedProduct.Id }, providedProduct);
-        }
 
         // DELETE: api/ProvidedProducts/5
         [HttpDelete("{id}")]
