@@ -79,10 +79,34 @@ namespace WebApiCRUD.Controllers
         [HttpPost]
         public async Task<ActionResult<Sale>> PostSale(Sale sale)
         {
+            if (sale.SalesData is null || sale.SalesData.Count == 0)
+                throw new Exception("Данные о товарах обязательно должны присутстовать в акте продажи");
+            //проверим, нет ли дубликатов товаров в SaleData
+            CheckMethods.СheckForRepeatProductsIds(new List<IProductId>(sale.SalesData));
+            //проверим, существют ли товары в таблице товаров из SaleData
+            foreach (var saleData in sale.SalesData)
+            {
+                CheckMethods.CheckProductInProductsTable(saleData.ProductId, _context);
+            }
+
+            //проверим, существует ли такая торговая точка
+            if (!_context.SalesPoints.Any(sp => sp.Id == sale.SalesPointId))
+                throw new Exception("Торговой точки с таким Id не существует");
+
             _context.Sales.Add(sale);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSale", new { id = sale.Id }, sale);
+            //если id покупателся не равно 0 или null, добавим в его коллекцию покупок, этот акт продажи
+            if (sale.BuyerId is not null && sale.BuyerId != 0)
+            {
+                var buyers = _context.Buyers.FirstOrDefault(b => b.Id == sale.BuyerId);
+                _context.Entry(buyers).Collection(b => b.SalesIds).Load();
+                buyers.SalesIds.Add(new SaleIdClass { SaleId = sale.Id });
+                await _context.SaveChangesAsync();
+            }
+            
+
+            return NoContent();
         }
 
         // DELETE: api/Sales/5
