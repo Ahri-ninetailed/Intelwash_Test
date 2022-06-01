@@ -163,6 +163,16 @@ namespace WebApiCRUD.Controllers
 
             return NoContent();
         }
+        //метод проверяет, есть ли в имеющихся продуктах дубликаты и если есть выкидывает ошибку
+        private static void СheckForRepeatProvidedProductsIds(SalesPoint salesPoint)
+        {
+            //получим лист, который содержит все Id добавляемых продуктов
+            var salesPointProductsIdList = (from providedProduct in salesPoint.ProvidedProducts
+                                            select providedProduct.ProductId).ToList();
+            //если лист содержит дубликаты, то такую торговую нельзя добавлять
+            if (salesPointProductsIdList.Count != salesPointProductsIdList.Distinct().Count())
+                throw new Exception("Точка содержит повторяющиеся Id продуктов");
+        }
 
         //метод проверяет, есть ли продукт с таким Id в конкретной торговой точке и если есть выкидывает ошибку
         private static void CheckProductExistInSalesPoint(SalesPoint salesPoint, int providedProductProductId)
