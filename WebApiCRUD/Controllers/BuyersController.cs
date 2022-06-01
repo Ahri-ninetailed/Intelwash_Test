@@ -95,6 +95,14 @@ namespace WebApiCRUD.Controllers
                 return NotFound();
             }
 
+            //подгрузим лист Id покупок покупателя
+            _context.Entry(buyer).Collection(b => b.SalesIds).Load();
+            //удалим из таблицы SalesIds соотвествующие строки, которые есть в листе удаляемого пользователя
+            if (buyer.SalesIds is not null)
+            {
+                foreach (var saleId in buyer.SalesIds)
+                    _context.SalesIds.Remove(saleId);
+            }    
             _context.Buyers.Remove(buyer);
             await _context.SaveChangesAsync();
 
