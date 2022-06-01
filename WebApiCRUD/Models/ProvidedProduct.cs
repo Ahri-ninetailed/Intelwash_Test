@@ -1,7 +1,7 @@
 ﻿using System;
 namespace WebApiCRUD.Models
 {
-    public class ProvidedProduct
+    public class ProvidedProduct : IProductId
     {
        
         public int Id { get; set; }

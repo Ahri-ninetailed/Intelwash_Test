@@ -10,7 +10,7 @@ using WebApiCRUD.Models;
 
 namespace WebApiCRUD.Models
 {
-    public class SaleData
+    public class SaleData : IProductId
     {
         private readonly MyDatabaseContext _context;
         public SaleData()
@@ -24,12 +24,14 @@ namespace WebApiCRUD.Models
         public int Id { get; set; }
         public int ProductId { get; set; }
         public int ProductQuantity { get; set; }
-        public double ProductIdAmount 
-        { 
+        public double ProductIdAmount
+        {
             get
             {
-                    var product = _context.Products.FirstOrDefault(p => p.Id == ProductId);
-                    return ProductQuantity * product.Price;  
+                if (_context is null)
+                    return 0;
+                var product = _context.Products.FirstOrDefault(p => p.Id == ProductId);
+                return ProductQuantity * product.Price;
             }
         }
     }
