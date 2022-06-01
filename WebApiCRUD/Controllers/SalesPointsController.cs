@@ -112,8 +112,8 @@ namespace WebApiCRUD.Controllers
 
         // POST: /api/SalesPoints/ProvidedProductInSalesPoint/{salesPointId}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost("ProvidedProductInSalesPoint/{salesPointId}")]
-        public async Task<ActionResult<SalesPoint>> PostProvidedProductInSalesPoint(int salesPointId ,ProvidedProduct providedProduct)
+        [HttpPost("AddProvidedProductInSalesPoint/{salesPointId}")]
+        public async Task<ActionResult<SalesPoint>> PostAddProvidedProductInSalesPoint(int salesPointId ,ProvidedProduct providedProduct)
         {
             //получим объект торговой точки, в которую будем добавлять имеющийся товар
             var salesPoint = _context.SalesPoints.FirstOrDefault(sp => sp.Id == salesPointId);
