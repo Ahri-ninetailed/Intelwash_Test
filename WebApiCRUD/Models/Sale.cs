@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace WebApiCRUD.Models
 {
@@ -17,6 +19,7 @@ namespace WebApiCRUD.Models
         public List<SaleData> SalesData { get; set; }
         public class SaleData
         {
+            [Key]
             public int ProductId { get; set; }
             public int ProductQuantitty { get; set; }
             public double ProductIdAmount { get; set; }

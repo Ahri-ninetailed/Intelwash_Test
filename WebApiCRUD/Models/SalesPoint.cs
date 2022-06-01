@@ -10,10 +10,5 @@ namespace WebApiCRUD.Models
         [Required]
         public string Name { get; set; }
         public List<ProvidedProduct> ProvidedProducts { get; set; }
-        public class ProvidedProduct
-        {
-            public int ProductId { get; set; }
-            public int ProductQuantity { get; set; }
-        }
     }
 }
