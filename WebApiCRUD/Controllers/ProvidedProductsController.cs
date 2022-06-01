@@ -52,6 +52,9 @@ namespace WebApiCRUD.Controllers
                 return BadRequest();
             }
 
+            if (_context.ProvidedProducts.Where(pp => pp.Id == id).Any(pp => pp.ProductId != providedProduct.ProductId))
+                throw new Exception("Нельзя изменить ProductId товара. Вы можете удалить этот товар и добавить новый, в нужную торговую точку");
+
             _context.Entry(providedProduct).State = EntityState.Modified;
 
             try
