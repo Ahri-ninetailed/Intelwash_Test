@@ -9,7 +9,11 @@ namespace WebApiCRUD.Models
         public int Id { get; set; }
         [Required]
         public string Name { get; set; }
-        [Column("SalesIds")]
-        public List<Sale> Sales { get; set; }
+        public List<SaleIdClass> SalesIds { get; set; }
+    }
+    public class SaleIdClass
+    {
+        public int Id { get; set; }
+        public int SaleId { get; set; }
     }
 }

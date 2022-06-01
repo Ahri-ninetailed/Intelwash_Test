@@ -25,7 +25,7 @@ namespace WebApiCRUD.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Buyer>>> GetBuyers()
         {
-            return await _context.Buyers.ToListAsync();
+            return await _context.Buyers.Include(b => b.SalesIds).ToListAsync();
         }
 
         // GET: api/Buyers/5
@@ -38,21 +38,22 @@ namespace WebApiCRUD.Controllers
             {
                 return NotFound();
             }
-
+            _context.Entry(buyer).Collection(b => b.SalesIds).Load();
             return buyer;
         }
 
-        // PUT: api/Buyers/5
+        // PUT: api/Buyers/{id}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBuyer(int id, Buyer buyer)
+        public async Task<IActionResult> PutBuyer(int id, string newName)
         {
+            var buyer = _context.Buyers.FirstOrDefault(b => b.Id == id);
             if (id != buyer.Id)
             {
                 return BadRequest();
             }
-
-            _context.Entry(buyer).State = EntityState.Modified;
+            buyer.Name = newName;
+            
 
             try
             {
@@ -78,9 +79,19 @@ namespace WebApiCRUD.Controllers
         [HttpPost]
         public async Task<ActionResult<Buyer>> PostBuyer(Buyer buyer)
         {
-            _context.Buyers.Add(buyer);
-            await _context.SaveChangesAsync();
+            //если лист идентификаторов продаж не пуст, проверим, существуют ли такие акты продаж, если нет, то сообщим об этом
+            if (buyer.SalesIds is not null)
+            {
+                foreach (var SaleId in buyer.SalesIds)
+                {
+                    if (!_context.Sales.Any(s => s.Id == SaleId.SaleId))
+                        throw new Exception("Нет акта продажи с таким Id");
+                }
+            }
 
+            _context.Buyers.Add(buyer);
+            
+            await _context.SaveChangesAsync();
             return CreatedAtAction("GetBuyer", new { id = buyer.Id }, buyer);
         }
 
@@ -94,6 +105,14 @@ namespace WebApiCRUD.Controllers
                 return NotFound();
             }
 
+            //подгрузим лист Id покупок покупателя
+            _context.Entry(buyer).Collection(b => b.SalesIds).Load();
+            //удалим из таблицы SalesIds соотвествующие строки, которые есть в листе удаляемого пользователя
+            if (buyer.SalesIds is not null)
+            {
+                foreach (var saleId in buyer.SalesIds)
+                    _context.SalesIds.Remove(saleId);
+            }    
             _context.Buyers.Remove(buyer);
             await _context.SaveChangesAsync();
 
