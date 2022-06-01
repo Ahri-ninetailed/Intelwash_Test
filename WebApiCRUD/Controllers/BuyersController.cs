@@ -25,7 +25,7 @@ namespace WebApiCRUD.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Buyer>>> GetBuyers()
         {
-            return await _context.Buyers.ToListAsync();
+            return await _context.Buyers.Include(b => b.SalesIds).ToListAsync();
         }
 
         // GET: api/Buyers/5
@@ -38,21 +38,22 @@ namespace WebApiCRUD.Controllers
             {
                 return NotFound();
             }
-
+            _context.Entry(buyer).Collection(b => b.SalesIds).Load();
             return buyer;
         }
 
-        // PUT: api/Buyers/5
+        // PUT: api/Buyers/{id}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBuyer(int id, Buyer buyer)
+        public async Task<IActionResult> PutBuyer(int id, string newName)
         {
+            var buyer = _context.Buyers.FirstOrDefault(b => b.Id == id);
             if (id != buyer.Id)
             {
                 return BadRequest();
             }
-
-            _context.Entry(buyer).State = EntityState.Modified;
+            buyer.Name = newName;
+            
 
             try
             {
