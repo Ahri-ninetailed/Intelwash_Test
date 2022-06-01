@@ -25,7 +25,8 @@ namespace WebApiCRUD.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Sale>>> GetSales()
         {
-            return await _context.Sales.ToListAsync();
+
+            return await _context.Sales.Include(s => s.SalesData).ToListAsync();
         }
 
         // GET: api/Sales/5
@@ -33,7 +34,7 @@ namespace WebApiCRUD.Controllers
         public async Task<ActionResult<Sale>> GetSale(int id)
         {
             var sale = await _context.Sales.FindAsync(id);
-
+            _context.Entry(sale).Collection(s => s.SalesData).Load();
             if (sale == null)
             {
                 return NotFound();
