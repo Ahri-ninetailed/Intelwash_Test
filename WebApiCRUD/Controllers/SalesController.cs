@@ -95,6 +95,12 @@ namespace WebApiCRUD.Controllers
                 return NotFound();
             }
 
+            //подгрузим данные о заказе
+            _context.Entry(sale).Collection(s => s.SalesData).Load();
+            //перед удалением акта продажи, удалим, все его данные из листа
+            foreach (var saleData in sale.SalesData)
+                _context.SaleDatas.Remove(saleData);
+
             _context.Sales.Remove(sale);
             await _context.SaveChangesAsync();
 
