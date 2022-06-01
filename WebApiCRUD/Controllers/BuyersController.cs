@@ -80,17 +80,26 @@ namespace WebApiCRUD.Controllers
         public async Task<ActionResult<Buyer>> PostBuyer(Buyer buyer)
         {
             //если лист идентификаторов продаж не пуст, проверим, существуют ли такие акты продаж, если нет, то сообщим об этом
-            if (buyer.SalesIds is not null)
+            if (buyer.SalesIds is not null || buyer.SalesIds.Count != 0)
             {
                 foreach (var SaleId in buyer.SalesIds)
                 {
                     if (!_context.Sales.Any(s => s.Id == SaleId.SaleId))
                         throw new Exception("Нет акта продажи с таким Id");
+                    //если акт продажи существует, то проверим, не совершил ли его другой пользователь
+                    else
+                    {
+                        //при добавлении покупателя, в его список покупок, можно добавить только те покупки, у которых покупатель не был зарегестрирован
+                        var thisSale = _context.Sales.FirstOrDefault(s => s.Id == SaleId.SaleId);
+                        if (thisSale.BuyerId is not null && thisSale.BuyerId != 0)
+                            throw new Exception("Эту сделку совершил другой пользовтель");
+                    }
+                        
                 }
             }
 
             _context.Buyers.Add(buyer);
-            
+
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetBuyer", new { id = buyer.Id }, buyer);
         }
