@@ -13,6 +13,7 @@ namespace WebApiCRUD.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<SalesPoint> SalesPoints { get; set; }
         public DbSet<ProvidedProduct> ProvidedProducts { get; set; }
+        public DbSet<SaleData> SaleDatas { get; set; }
         public DbSet<SaleIdClass> SalesIds { get; set; }
     }
 }
