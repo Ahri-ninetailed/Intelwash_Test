@@ -54,15 +54,16 @@ namespace WebApiCRUD.Controllers
             {
                 throw new Exception("Id не совпадают. Нельзя изменить Id торговой точки.");
             }
+            //проверим изменяемые имеющиеся продукты на дубликаты
+            СheckForRepeatProvidedProductsIds(salesPoint);
 
             foreach (var providedProduct in salesPoint.ProvidedProducts)
             {
                 //пользователь не может менять Id имеющегося товара на тот, который уже есть в другой точке
-                CheckProvidedProductInOtherSalesPoint(id, providedProduct.Id, "Нельзя изменить имеющийся товар, если его нет в торговой точке");
+                CheckProvidedProductInOtherSalesPoint(id, providedProduct.Id, "Нельзя изменить Id имеющегося товара, на Id товара из другой точки");
                 //метод проверяет, существует ли такой товар
                 CheckProductInProductsTable(providedProduct);
-                //метод проверяет, есть ли товар с таким id конкретной торговой точке
-                CheckProductExistInSalesPoint(salesPoint, providedProduct.ProductId);
+               
                 _context.Entry(providedProduct).State = EntityState.Modified;
             }
 
