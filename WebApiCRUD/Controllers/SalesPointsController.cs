@@ -62,8 +62,8 @@ namespace WebApiCRUD.Controllers
                 //пользователь не может менять Id имеющегося товара на тот, который уже есть в другой точке
                 CheckProvidedProductInOtherSalesPoint(id, providedProduct.Id, "Нельзя изменить Id имеющегося товара, на Id товара из другой точки");
                 //метод проверяет, существует ли такой товар
-                CheckProductInProductsTable(providedProduct);
-               
+                CheckMethods.CheckProductInProductsTable(providedProduct.ProductId, _context);
+
                 _context.Entry(providedProduct).State = EntityState.Modified;
             }
 
@@ -99,7 +99,7 @@ namespace WebApiCRUD.Controllers
             foreach (var providedProduct in salesPoint.ProvidedProducts)
             {
                 //проверим, существуют ли продукты, которые мы хотим добавить
-                CheckProductInProductsTable(providedProduct);
+                CheckMethods.CheckProductInProductsTable(providedProduct.ProductId, _context);
             }
 
             _context.SalesPoints.Add(salesPoint);
@@ -127,7 +127,7 @@ namespace WebApiCRUD.Controllers
             CheckProductExistInSalesPoint(salesPoint, providedProduct.ProductId);
 
             //метод проверяет наличие товара в таблице товаров
-            CheckProductInProductsTable(providedProduct);
+            CheckMethods.CheckProductInProductsTable(providedProduct.ProductId, _context);
 
             //метод проверяет, есть ли такое Id имеющегося товара, в других торговых точках, если есть, то вылетит ошибка
             CheckProvidedProductInOtherSalesPoint(salesPointId, providedProduct.Id, "Нельзя добавить имеющийся товар с таким же Id, как в другой точке");
@@ -190,13 +190,6 @@ namespace WebApiCRUD.Controllers
         private static void NoSalesPointFoundException()
         {
             throw new Exception("Не найдено торговой точки с таким Id");
-        }
-
-        //метод проверяет наличие товара в таблице товаров
-        private void CheckProductInProductsTable(ProvidedProduct providedProduct)
-        {
-            if (!_context.Products.Any(p => p.Id == providedProduct.ProductId))
-                throw new Exception($"Не найдено продукта с Id={providedProduct.ProductId}");
         }
 
         private bool SalesPointExists(int id)
