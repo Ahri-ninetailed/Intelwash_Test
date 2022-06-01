@@ -12,6 +12,15 @@ namespace WebApiCRUD.Models
 {
     public class SaleData
     {
+        private readonly MyDatabaseContext _context;
+        public SaleData()
+        {
+
+        }
+        public SaleData(MyDatabaseContext context)
+        {
+            _context = context;
+        }
         public int Id { get; set; }
         public int ProductId { get; set; }
         public int ProductQuantity { get; set; }
@@ -19,12 +28,8 @@ namespace WebApiCRUD.Models
         { 
             get
             {
-
-                using (var context = new MyDatabaseContext(new DbContextOptions<MyDatabaseContext>()))
-                {
-                    var product = context.Products.FirstOrDefault(p => p.Id == ProductId);
-                    return ProductQuantity * product.Price;
-                }
+                    var product = _context.Products.FirstOrDefault(p => p.Id == ProductId);
+                    return ProductQuantity * product.Price;  
             }
         }
     }
