@@ -89,9 +89,7 @@ namespace WebApiCRUD.Controllers
                 CheckMethods.CheckProductInProductsTable(saleData.ProductId, _context);
             }
 
-            //проверим, существует ли такая торговая точка
-            if (!_context.SalesPoints.Any(sp => sp.Id == sale.SalesPointId))
-                throw new Exception("Торговой точки с таким Id не существует");
+            CheckSalePoint(sale.SalesPointId);
 
             _context.Sales.Add(sale);
             await _context.SaveChangesAsync();
@@ -130,7 +128,13 @@ namespace WebApiCRUD.Controllers
 
             return NoContent();
         }
-
+        //метод проверяет сущестование торговой точки
+        private void CheckSalePoint(int idSalePoint)
+        {
+            //проверим, существует ли такая торговая точка
+            if (!_context.SalesPoints.Any(sp => sp.Id == idSalePoint))
+                throw new Exception("Торговой точки с таким Id не существует");
+        }
         private bool SaleExists(int id)
         {
             return _context.Sales.Any(e => e.Id == id);
