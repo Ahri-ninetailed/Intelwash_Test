@@ -53,8 +53,46 @@ namespace WebApiCRUD.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(sale).State = EntityState.Modified;
+            //проверим изменяемые имеющиеся продукты на дубликаты
+            CheckMethods.СheckForRepeatProductsIds(new List<IProductId>(sale.SalesData));
+            //проверим существует ли торговая точка, на которую хотят изменить
+            CheckSalePoint(sale.SalesPointId);
+            foreach (var saleData in sale.SalesData)
+            {
+                //метод проверяет, существует ли такой товар
+                CheckMethods.CheckProductInProductsTable(saleData.ProductId, _context);
+                //проверим, не содержит ли изменяемый акт продажи, SaleData с другим Id такого же ProductIt
+                if (_context.SaleDatas.Where(sd => sd.Id != saleData.Id).Any(sd => sd.ProductId == saleData.ProductId))
+                    throw new Exception($"Товар с ProductId={saleData.ProductId} уже есть в этом акте продажи");
 
+                _context.Entry(saleData).State = EntityState.Modified;
+            }
+
+            
+            //если изменилось Id покупателя, то у старого покупателя удалим этот заказ, а у нового добавим
+            var oldSales = _context.Sales.FirstOrDefault(s => s.Id == id);
+            if (oldSales.BuyerId != sale.BuyerId)
+            {
+                //получим объект старого покупателя
+                var oldBuyer = _context.Buyers.FirstOrDefault(b => b.Id == oldSales.BuyerId);
+                _context.Entry(oldBuyer).Collection(b => b.SalesIds).Load();
+                //удалим у старого покупателя этот акт продажи
+                oldBuyer.SalesIds.Remove(_context.SalesIds.FirstOrDefault(salesIds => salesIds.SaleId == id));
+
+                //получим объект нового покупателя
+                var newBuyer = _context.Buyers.FirstOrDefault(b => b.Id == sale.BuyerId);
+                _context.Entry(newBuyer).Collection(b => b.SalesIds).Load();
+                //добавим новому покупателю этот акт продажи
+                newBuyer.SalesIds.Add(_context.SalesIds.FirstOrDefault(salesIds => salesIds.SaleId == id));
+            }
+
+            //обновим акт продажи
+            oldSales.BuyerId = sale.BuyerId;
+            oldSales.Date = sale.Date;
+            oldSales.SalesData = sale.SalesData;
+            oldSales.SalesPointId = sale.SalesPointId;
+            oldSales.Time = sale.Time;
+            
             try
             {
                 await _context.SaveChangesAsync();
