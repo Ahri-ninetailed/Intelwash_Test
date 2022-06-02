@@ -55,15 +55,15 @@ namespace WebApiCRUD.Controllers
                 throw new Exception("Id не совпадают. Нельзя изменить Id торговой точки.");
             }
             //проверим изменяемые имеющиеся продукты на дубликаты
-            СheckForRepeatProvidedProductsIds(salesPoint);
+            CheckMethods.СheckForRepeatProductsIds(new List<IProductId>(salesPoint.ProvidedProducts));
 
             foreach (var providedProduct in salesPoint.ProvidedProducts)
             {
                 //пользователь не может менять Id имеющегося товара на тот, который уже есть в другой точке
                 CheckProvidedProductInOtherSalesPoint(id, providedProduct.Id, "Нельзя изменить Id имеющегося товара, на Id товара из другой точки");
                 //метод проверяет, существует ли такой товар
-                CheckProductInProductsTable(providedProduct);
-               
+                CheckMethods.CheckProductInProductsTable(providedProduct.ProductId, _context);
+
                 _context.Entry(providedProduct).State = EntityState.Modified;
             }
 
@@ -94,12 +94,12 @@ namespace WebApiCRUD.Controllers
         public async Task<ActionResult<SalesPoint>> PostSalesPoint(SalesPoint salesPoint)
         {
             //проверим на ProductId на дубликаты
-            СheckForRepeatProvidedProductsIds(salesPoint);
+            CheckMethods.СheckForRepeatProductsIds(new List<IProductId>(salesPoint.ProvidedProducts));
 
             foreach (var providedProduct in salesPoint.ProvidedProducts)
             {
                 //проверим, существуют ли продукты, которые мы хотим добавить
-                CheckProductInProductsTable(providedProduct);
+                CheckMethods.CheckProductInProductsTable(providedProduct.ProductId, _context);
             }
 
             _context.SalesPoints.Add(salesPoint);
@@ -127,7 +127,7 @@ namespace WebApiCRUD.Controllers
             CheckProductExistInSalesPoint(salesPoint, providedProduct.ProductId);
 
             //метод проверяет наличие товара в таблице товаров
-            CheckProductInProductsTable(providedProduct);
+            CheckMethods.CheckProductInProductsTable(providedProduct.ProductId, _context);
 
             //метод проверяет, есть ли такое Id имеющегося товара, в других торговых точках, если есть, то вылетит ошибка
             CheckProvidedProductInOtherSalesPoint(salesPointId, providedProduct.Id, "Нельзя добавить имеющийся товар с таким же Id, как в другой точке");
@@ -160,16 +160,6 @@ namespace WebApiCRUD.Controllers
 
             return NoContent();
         }
-        //метод проверяет, есть ли в имеющихся продуктах дубликаты и если есть выкидывает ошибку
-        private static void СheckForRepeatProvidedProductsIds(SalesPoint salesPoint)
-        {
-            //получим лист, который содержит все Id добавляемых продуктов
-            var salesPointProductsIdList = (from providedProduct in salesPoint.ProvidedProducts
-                                            select providedProduct.ProductId).ToList();
-            //если лист содержит дубликаты, то такую торговую нельзя добавлять
-            if (salesPointProductsIdList.Count != salesPointProductsIdList.Distinct().Count())
-                throw new Exception("Точка содержит повторяющиеся Id продуктов");
-        }
 
         //метод проверяет, есть ли продукт с таким Id в конкретной торговой точке и если есть выкидывает ошибку
         private static void CheckProductExistInSalesPoint(SalesPoint salesPoint, int providedProductProductId)
@@ -190,13 +180,6 @@ namespace WebApiCRUD.Controllers
         private static void NoSalesPointFoundException()
         {
             throw new Exception("Не найдено торговой точки с таким Id");
-        }
-
-        //метод проверяет наличие товара в таблице товаров
-        private void CheckProductInProductsTable(ProvidedProduct providedProduct)
-        {
-            if (!_context.Products.Any(p => p.Id == providedProduct.ProductId))
-                throw new Exception($"Не найдено продукта с Id={providedProduct.ProductId}");
         }
 
         private bool SalesPointExists(int id)

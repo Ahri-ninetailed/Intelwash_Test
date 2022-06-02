@@ -17,13 +17,15 @@ namespace WebApiCRUD.Models
         public int? BuyerId { get; set; }
         [Required]
         public List<SaleData> SalesData { get; set; }
-        public class SaleData
+        public double TotalAmount
         {
-            [Key]
-            public int ProductId { get; set; }
-            public int ProductQuantitty { get; set; }
-            public double ProductIdAmount { get; set; }
+            get
+            {
+                double answer = 0;
+                foreach (var saleData in SalesData)
+                    answer += saleData.ProductIdAmount;
+                return answer;
+            }
         }
-        public double TotalAmount { get; set; }
     }
 }
