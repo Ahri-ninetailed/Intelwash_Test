@@ -53,7 +53,7 @@ namespace WebApiCRUD.Controllers
                 return BadRequest();
             }
 
-            //проверим изменяемые имеющиеся продукты на дубликаты
+            //проверим изменяемые продукты на дубликаты
             CheckMethods.СheckForRepeatProductsIds(new List<IProductId>(sale.SalesData));
             //проверим существует ли торговая точка, на которую хотят изменить
             CheckSalePoint(sale.SalesPointId);
@@ -71,26 +71,31 @@ namespace WebApiCRUD.Controllers
             
             //если изменилось Id покупателя, то у старого покупателя удалим этот заказ, а у нового добавим
             var oldSales = _context.Sales.FirstOrDefault(s => s.Id == id);
+            _context.Entry(oldSales).Collection(s => s.SalesData).Load();
+
             if (oldSales.BuyerId != sale.BuyerId)
             {
-                //получим объект старого покупателя
-                var oldBuyer = _context.Buyers.FirstOrDefault(b => b.Id == oldSales.BuyerId);
-                _context.Entry(oldBuyer).Collection(b => b.SalesIds).Load();
-                //удалим у старого покупателя этот акт продажи
-                oldBuyer.SalesIds.Remove(_context.SalesIds.FirstOrDefault(salesIds => salesIds.SaleId == id));
+                //если старый покупатель есть, то удалим у него этот акт продажи
+                if (oldSales.BuyerId is not null)
+                {
+                    var oldBuyer = _context.Buyers.FirstOrDefault(b => b.Id == oldSales.BuyerId);
+                    _context.Entry(oldBuyer).Collection(b => b.SalesIds).Load();
+                    oldBuyer.SalesIds.Remove(_context.SalesIds.FirstOrDefault(si => si.SaleId == id));
+                }
 
-                //получим объект нового покупателя
                 var newBuyer = _context.Buyers.FirstOrDefault(b => b.Id == sale.BuyerId);
                 _context.Entry(newBuyer).Collection(b => b.SalesIds).Load();
-                //добавим новому покупателю этот акт продажи
-                newBuyer.SalesIds.Add(_context.SalesIds.FirstOrDefault(salesIds => salesIds.SaleId == id));
+                var addedSaleId = _context.SalesIds.FirstOrDefault(s => s.SaleId == id);
+                if (addedSaleId is null)
+                    newBuyer.SalesIds.Add(new SaleIdClass { SaleId = id });
+                else
+                    newBuyer.SalesIds.Add(addedSaleId);
             }
 
             //обновим акт продажи
             oldSales.BuyerId = sale.BuyerId;
             oldSales.Date = sale.Date;
             oldSales.SalesData = sale.SalesData;
-            oldSales.SalesPointId = sale.SalesPointId;
             oldSales.Time = sale.Time;
             
             try
@@ -140,7 +145,7 @@ namespace WebApiCRUD.Controllers
                 buyers.SalesIds.Add(new SaleIdClass { SaleId = sale.Id });
                 await _context.SaveChangesAsync();
             }
-            
+
 
             return NoContent();
         }
