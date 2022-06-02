@@ -61,9 +61,6 @@ namespace WebApiCRUD.Controllers
             {
                 //метод проверяет, существует ли такой товар
                 CheckMethods.CheckProductInProductsTable(saleData.ProductId, _context);
-                //проверим, не содержит ли изменяемый акт продажи, SaleData с другим Id такого же ProductIt
-                if (_context.SaleDatas.Where(sd => sd.Id != saleData.Id).Any(sd => sd.ProductId == saleData.ProductId))
-                    throw new Exception($"Товар с ProductId={saleData.ProductId} уже есть в этом акте продажи");
 
                 _context.Entry(saleData).State = EntityState.Modified;
             }
