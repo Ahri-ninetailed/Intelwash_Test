@@ -114,6 +114,28 @@ namespace WebApiCRUD.Controllers
             return NoContent();
         }
 
+        //через метод будет осуществляться продажа
+        // POST: api/Sales
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("Sell")]
+        public async Task<ActionResult<Sale>> PostSell(SellInfo sellInfo)
+        {
+            //проверим на наличие такой торговой точки
+            CheckSalePoint(sellInfo.SalePointId);
+            //проверим наличие товара в этой точке
+            var salePoint = _context.SalesPoints.FirstOrDefault(sp => sp.Id == sellInfo.SalePointId);
+            _context.Entry(salePoint).Collection(sp => sp.ProvidedProducts).Load();
+            var providedProductsInThisPoint = salePoint.ProvidedProducts.FirstOrDefault(pp => pp.ProductId == sellInfo.ProductId);
+            if (providedProductsInThisPoint.ProductQuantity < sellInfo.ProductQuantity)
+                throw new Exception($"В точке товара всего {providedProductsInThisPoint.ProductQuantity}шт.");
+            //изменим количество продуктов в точке и добавим объект Sale в бд
+            if (sellInfo.BuyerId == 0)
+                sellInfo.BuyerId = null;
+            await ChangeProductsCountInPointAndAddSaleObjectInDb(sellInfo, providedProductsInThisPoint, sellInfo.BuyerId is null);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         // POST: api/Sales
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -179,5 +201,54 @@ namespace WebApiCRUD.Controllers
         {
             return _context.Sales.Any(e => e.Id == id);
         }
+        //метод изменяет количество товара в точке и формирует, и записывает Sale в бд. Если есть пользователь, который покупает, то добавляем SaleId в его лист
+        private async Task ChangeProductsCountInPointAndAddSaleObjectInDb(SellInfo sellInfo, ProvidedProduct providedProductsInThisPoint, bool IsBuyerIdNull)
+        {
+            //изменим кол-во товара в точке
+            providedProductsInThisPoint.ProductQuantity -= sellInfo.ProductQuantity;
+            //сформируем объект Sale
+            if (!IsBuyerIdNull)
+            {
+                var sale = new Sale
+                {
+                    Date = DateTime.Now,
+                    Time = DateTime.Now,
+                    SalesPointId = sellInfo.SalePointId,
+                    BuyerId = sellInfo.BuyerId,
+                    SalesData = new List<SaleData> { new SaleData { ProductId = sellInfo.ProductId, ProductQuantity = sellInfo.ProductQuantity } }
+                };
+                _context.Sales.Add(sale);
+                await _context.SaveChangesAsync();
+                //добавим объект Sale в лист пользоваттеля
+                var buyer = _context.Buyers.FirstOrDefault(b => b.Id == sellInfo.BuyerId);
+                _context.Entry(buyer).Collection(b => b.SalesIds).Load();
+                if (buyer.SalesIds is not null)
+                    buyer.SalesIds.Add(new SaleIdClass { SaleId = sale.Id });
+                if (buyer.SalesIds is null)
+                    buyer.SalesIds = new List<SaleIdClass> { new SaleIdClass { SaleId = sale.Id } };
+            }
+            else
+            {
+                var sale = new Sale
+                {
+                    Date = DateTime.Now,
+                    Time = DateTime.Now,
+                    SalesPointId = sellInfo.SalePointId,
+                    BuyerId = null,
+                    SalesData = new List<SaleData> { new SaleData { ProductId = sellInfo.ProductId, ProductQuantity = sellInfo.ProductQuantity } }
+                };
+                _context.Sales.Add(sale);
+                await _context.SaveChangesAsync();
+            }
+        }
+    }
+
+    //класс содержит информацию о продаже
+    public class SellInfo
+    {
+        public int SalePointId { get; set; }
+        public int ProductQuantity { get; set; }
+        public int? BuyerId { get; set; }
+        public int ProductId { get; set; }
     }
 }
